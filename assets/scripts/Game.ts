@@ -65,6 +65,7 @@ export default class Game extends cc.Component {
 	nextFruit: cc.Node = null;
 	score:number = 0;
 	isAnimtionPlaying:boolean = false;
+	isCreating:boolean = false;
 	createOneFruit(num): cc.Node {
 		let fruit = cc.instantiate(this.fruitPrefab);
 		// 获取到配置信息
@@ -92,6 +93,7 @@ export default class Game extends cc.Component {
 	}
 
 	onSameFruitContact({self, other}) {
+		other.node.off('sameContact')
 		self.node.removeFromParent(false);
 		other.node.removeFromParent(false);
 		// 获取下面的node
@@ -104,14 +106,28 @@ export default class Game extends cc.Component {
 		this.addScore(id);
 		// 生成下一级水果
 		const nextId = id;
+		
 		const newFruit = this.createOneFruit(nextId);
 		newFruit.setPosition(cc.v2(x, y));
 		this.fruitContainer.addChild(newFruit);
+
+		if (nextId <= 11) {
+			// 展示动画 todo 动画效果需要调整
+			newFruit.scale = 0
+			cc.tween(newFruit).to(.5, {
+					scale: 1
+			}, {
+					easing: "backOut"
+			}).start()
+	} else {
+			// todo 合成两个西瓜
+			console.log('合成两个西瓜')
+	}
 	}
 	// 合并时的动画效果
 	async createFruitJuice(id, pos, n) {
 		if(this.isAnimtionPlaying) return;
-		
+
 		this.isAnimtionPlaying = true;
 		// 播放合并的声音
 		// cc.audioEngine.play(this.boomAudio, false, 1);
@@ -129,7 +145,6 @@ export default class Game extends cc.Component {
 	}
 	// 添加得分分数
 	addScore(fruitId) {
-		console.log(fruitId);
 		this.score += fruitId * 2
 		// todo 处理分数tween动画
 		this.scoreLabel.string = this.score.toString()
@@ -182,17 +197,30 @@ export default class Game extends cc.Component {
 		// console.log(e.getLocationX());
 		// let num = ~~(Math.random() * ( this.fruits.length));
 		// 最多随机到第5个水果
-		let num = ~~(Math.random() * 5);
+		let nextId = ~~(Math.random() * 5);
 		const fruit = this.nextFruit;
 		fruit.setPosition(cc.v2(x, y));
 		this.fruitContainer.addChild(fruit);
-		this.nextSprite.spriteFrame = this.fruits[num].iconSF;
-		this.nextFruit = this.createOneFruit(num);
+		this.nextSprite.spriteFrame = null;
 
+		this.scheduleOnce(() => {
+			this.nextSprite.spriteFrame = this.fruits[nextId].iconSF;
+			this.nextSprite.node.scale = 0
+			cc.tween(this.nextSprite.node).to(.5, {
+					scale: 0.6
+			}, {
+					easing: "backOut"
+			}).start()
+			this.nextFruit = this.createOneFruit(nextId);
+			this.isCreating = false;
+	}, 1)
 		// console.log(fruit);
 	}
 
 	onTouchStart(e) {
+		if (this.isCreating) return;
+		this.isCreating = true
+
 		// 在点击位置生成一个水果
 		this.createFruitOnPos(e.getLocationX());
 	}
