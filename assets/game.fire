@@ -844,7 +844,7 @@
     "_groupIndex": 0,
     "groupIndex": 0,
     "showInEditor": false,
-    "_id": "8fRhMx7j1C7L5gxzHURfJC"
+    "_id": "12HLyAYY9MsZlaCLM+3i+a"
   },
   {
     "__type__": "cc.Label",
@@ -877,7 +877,7 @@
     "_N$fontFamily": "Arial",
     "_N$overflow": 0,
     "_N$cacheMode": 0,
-    "_id": "34r5EEBAtDHbIuCnlDxIjk"
+    "_id": "cfsrJk3nxFRKe55sD0lxRR"
   },
   {
     "__type__": "cc.RichText",
@@ -938,7 +938,7 @@
       "ctor": "Float64Array",
       "array": [
         -223.432,
-        385.17,
+        408.642,
         0,
         0,
         0,

@@ -64,7 +64,7 @@ export default class Game extends cc.Component {
 
 	nextFruit: cc.Node = null;
 	score:number = 0;
-
+	isAnimtionPlaying:boolean = false;
 	createOneFruit(num): cc.Node {
 		let fruit = cc.instantiate(this.fruitPrefab);
 		// 获取到配置信息
@@ -109,7 +109,10 @@ export default class Game extends cc.Component {
 		this.fruitContainer.addChild(newFruit);
 	}
 	// 合并时的动画效果
-	createFruitJuice(id, pos, n) {
+	async createFruitJuice(id, pos, n) {
+		if(this.isAnimtionPlaying) return;
+		
+		this.isAnimtionPlaying = true;
 		// 播放合并的声音
 		// cc.audioEngine.play(this.boomAudio, false, 1);
 		// cc.audioEngine.play(this.waterAudio, false, 1);
@@ -121,7 +124,8 @@ export default class Game extends cc.Component {
 		const config = this.juices[id];
 		const instance = juice.getComponent('Juice');
 		instance.init(config);
-		instance.showJuice(pos, n);
+		await instance.showJuice(pos, n);
+		this.isAnimtionPlaying = false;
 	}
 	// 添加得分分数
 	addScore(fruitId) {
