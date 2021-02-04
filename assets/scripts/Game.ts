@@ -63,9 +63,9 @@ export default class Game extends cc.Component {
 	juices: any[] = [];
 
 	nextFruit: cc.Node = null;
-	score:number = 0;
-	isAnimtionPlaying:boolean = false;
-	isCreating:boolean = false;
+	score: number = 0;
+	isAnimtionPlaying: boolean = false;
+	isCreating: boolean = false;
 	createOneFruit(num): cc.Node {
 		let fruit = cc.instantiate(this.fruitPrefab);
 		// 获取到配置信息
@@ -93,11 +93,11 @@ export default class Game extends cc.Component {
 	}
 
 	onSameFruitContact({self, other}) {
-		other.node.off('sameContact')
+		other.node.off('sameContact');
 		self.node.removeFromParent(false);
 		other.node.removeFromParent(false);
 		// 获取下面的node
-		let tempNode = self.node.y < other.node.y?self.node:other.node;
+		let tempNode = self.node.y < other.node.y ? self.node : other.node;
 		const {x, y} = tempNode; // 获取合并的水果位置
 		const id = other.getComponent('Fruit').id;
 		// 爆炸特效
@@ -106,27 +106,37 @@ export default class Game extends cc.Component {
 		this.addScore(id);
 		// 生成下一级水果
 		const nextId = id;
-		
+
 		const newFruit = this.createOneFruit(nextId);
 		newFruit.setPosition(cc.v2(x, y));
+		newFruit.getComponent(cc.RigidBody).enabledContactListener = false;
+		this.scheduleOnce(()=>{
+			console.log('触发');
+			newFruit.getComponent(cc.RigidBody).enabledContactListener = true;
+		},0.5)
 		this.fruitContainer.addChild(newFruit);
 
 		if (nextId <= 11) {
-			// 展示动画 todo 动画效果需要调整
-			newFruit.scale = 0
-			cc.tween(newFruit).to(.5, {
-					scale: 1
-			}, {
-					easing: "backOut"
-			}).start()
-	} else {
-			// todo 合成两个西瓜
-			console.log('合成两个西瓜')
-	}
+			newFruit.scale = 0;
+			cc.tween(newFruit)
+				.to(
+					0.5,
+					{
+						scale: 1,
+					},
+					{
+						easing: 'backOut',
+					}
+				)
+				.start();
+		} else {
+			// todo: 合成两个西瓜
+			console.log('合成两个西瓜');
+		}
 	}
 	// 合并时的动画效果
 	async createFruitJuice(id, pos, n) {
-		if(this.isAnimtionPlaying) return;
+		if (this.isAnimtionPlaying) return;
 
 		this.isAnimtionPlaying = true;
 		// 播放合并的声音
@@ -145,9 +155,9 @@ export default class Game extends cc.Component {
 	}
 	// 添加得分分数
 	addScore(fruitId) {
-		this.score += fruitId * 2
-		// todo 处理分数tween动画
-		this.scoreLabel.string = this.score.toString()
+		this.score += fruitId * 2;
+		// todo: 处理分数tween动画
+		this.scoreLabel.string = this.score.toString();
 	}
 	initPhysics(): void {
 		// 开启物理引擎
@@ -205,21 +215,27 @@ export default class Game extends cc.Component {
 
 		this.scheduleOnce(() => {
 			this.nextSprite.spriteFrame = this.fruits[nextId].iconSF;
-			this.nextSprite.node.scale = 0
-			cc.tween(this.nextSprite.node).to(.5, {
-					scale: 0.6
-			}, {
-					easing: "backOut"
-			}).start()
+			this.nextSprite.node.scale = 0;
+			cc.tween(this.nextSprite.node)
+				.to(
+					0.5,
+					{
+						scale: 0.6,
+					},
+					{
+						easing: 'backOut',
+					}
+				)
+				.start();
 			this.nextFruit = this.createOneFruit(nextId);
 			this.isCreating = false;
-	}, 1)
+		}, 1);
 		// console.log(fruit);
 	}
 
 	onTouchStart(e) {
 		if (this.isCreating) return;
-		this.isCreating = true
+		this.isCreating = true;
 
 		// 在点击位置生成一个水果
 		this.createFruitOnPos(e.getLocationX());
