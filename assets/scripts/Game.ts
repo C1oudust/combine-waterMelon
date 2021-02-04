@@ -111,7 +111,6 @@ export default class Game extends cc.Component {
 		newFruit.setPosition(cc.v2(x, y));
 		newFruit.getComponent(cc.RigidBody).enabledContactListener = false;
 		this.scheduleOnce(()=>{
-			console.log('触发');
 			newFruit.getComponent(cc.RigidBody).enabledContactListener = true;
 		},0.5)
 		this.fruitContainer.addChild(newFruit);
@@ -227,8 +226,11 @@ export default class Game extends cc.Component {
 					}
 				)
 				.start();
+				this.scheduleOnce(()=>{
+					this.isCreating = false;
+				},0.6)
 			this.nextFruit = this.createOneFruit(nextId);
-			this.isCreating = false;
+			
 		}, 1);
 		// console.log(fruit);
 	}
