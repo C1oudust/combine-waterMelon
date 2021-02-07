@@ -35,6 +35,9 @@ export default class Game extends cc.Component {
 	@property(cc.Node)
 	canvas: cc.Node = null;
 
+	@property(cc.Node)
+	successPop: cc.Node = null;
+
 	@property(cc.Prefab)
 	fruitPrefab: cc.Prefab = null;
 
@@ -68,6 +71,7 @@ export default class Game extends cc.Component {
 	isCreating: boolean = false;
 	createOneFruit(num): cc.Node {
 		let fruit = cc.instantiate(this.fruitPrefab);
+
 		// 获取到配置信息
 		const config = this.fruits[num];
 
@@ -83,9 +87,7 @@ export default class Game extends cc.Component {
 		physicsCircleCollider.apply();
 
 		fruit.on('sameContact', ({self, other}) => {
-			// 两个node都会触发，临时处理，看看有没有其他方法只展示一次的
 			other.node.off('sameContact');
-			// 处理水果合并的逻辑，下面再处理
 			this.onSameFruitContact({self, other});
 		});
 
@@ -96,11 +98,11 @@ export default class Game extends cc.Component {
 		other.node.off('sameContact');
 		self.node.removeFromParent(false);
 		other.node.removeFromParent(false);
-
 		// 获取下面的node
 		let tempNode = self.node.y < other.node.y ? self.node : other.node;
 		const {x, y} = tempNode; // 获取合并的水果位置
 		const id = other.getComponent('Fruit').id;
+
 		// self.node.destroy();
 		// other.node.destroy();
 		// 爆炸特效
@@ -117,7 +119,7 @@ export default class Game extends cc.Component {
 			newFruit.getComponent(cc.RigidBody).enabledContactListener = true;
 		}, 0.5);
 		this.fruitContainer.addChild(newFruit);
-		if (nextId < 11) {
+		if (nextId < 10) {
 			newFruit.scale = 0;
 			cc.tween(newFruit)
 				.to(
@@ -130,22 +132,8 @@ export default class Game extends cc.Component {
 					}
 				)
 				.start();
-		} else if (nextId == 11) {
-			console.log('合成了一个西瓜，你就是最靓的仔！');
-			var node = new cc.Node('Sprite');
-			const sp = node.addComponent(cc.Sprite);
-			sp.spriteFrame = this.fruits[10];
-			node.setScale(0);
-			node.setPosition(cc.v2({x, y}));
-			node.parent = this.canvas;
-			cc.tween(node)
-				.to(1, {
-					position: cc.v3(this.canvas.width / 2, -this.canvas.height / 2),
-					scale: 1,
-				})
-				.call(() => {
-					node.removeFromParent();
-				});
+		} else if (nextId == 10) {
+			this.onCombineWaterMelon();
 		} else {
 			// todo: 合成两个西瓜
 			console.log('合成两个西瓜，还没做，感觉没人合到这块');
@@ -216,6 +204,19 @@ export default class Game extends cc.Component {
 	onLoad() {
 		this.initPhysics();
 		this.canvas.on(cc.Node.EventType.TOUCH_START, this.onTouchStart, this);
+		this.successPop.active = false;
+		this.successPop.on(
+			cc.Node.EventType.TOUCH_START,
+			() => {
+				this.successPop.active = false;
+				this.successPop.children.forEach((child) => {
+					if (child.name != 'bg') {
+						child.destroy();
+					}
+				});
+			},
+			this
+		);
 		this.nextFruit = this.createOneFruit(0);
 		this.nextSprite.spriteFrame = this.fruits[0].iconSF;
 	}
@@ -225,6 +226,7 @@ export default class Game extends cc.Component {
 		// let num = ~~(Math.random() * ( this.fruits.length));
 		// 最多随机到第5个水果
 		let nextId = ~~(Math.random() * 5);
+		// let nextId = 9;
 		const fruit = this.nextFruit;
 		fruit.setPosition(cc.v2(x, y));
 		this.fruitContainer.addChild(fruit);
@@ -257,7 +259,41 @@ export default class Game extends cc.Component {
 		// 在点击位置生成一个水果
 		this.createFruitOnPos(e.getLocationX());
 	}
+
+	onCombineWaterMelon() {
+		console.log('合成了一个西瓜，你就是最靓的仔！');
+		var big = new cc.Node('Sprite');
+		const sp = big.addComponent(cc.Sprite);
+		sp.spriteFrame = this.fruits[10].iconSF;
+		big.setScale(0.5);
+		// big.setPosition(cc.v2({x, y}));
+		big.setPosition(cc.v2(0, -this.canvas.height / 2 + big.height / 2));
+		this.successPop.addChild(big);
+		this.successPop.active = true;
+		// big.runAction(
+		// 	cc.sequence(
+		// 		cc.delayTime(0.5),
+		// 	cc.moveTo(1, cc.v2(this.canvas.width / 2, -this.canvas.height / 2))
+		// 	)
+		// );
+		cc.tween(big)
+			.to(1, {
+				scale: 1,
+				position: cc.v3(0, 0),
+				// scale: 1,
+			})
+			.call(() => {
+				// big.removeFromParent();
+				let node = new cc.Node();
+				node.setPosition(0, 0);
+				node.addComponent(cc.Label).string = '你就是最靓的仔！';
+				this.successPop.addChild(node);
+			})
+			.start();
+	}
+
 	update(): void {
+		// todo: 游戏失败判定
 		// let maxHeight:number = -this.canvas.height;
 		let height: cc.Node[] = [];
 		this.fruitContainer.children.forEach((child) => {
@@ -268,7 +304,7 @@ export default class Game extends cc.Component {
 			return b.y - a.y;
 		});
 		if (height[0] && height[0].y > -100) {
-			console.log('over');
+			// console.log('over');
 		}
 	}
 	start() {}
