@@ -96,10 +96,13 @@ export default class Game extends cc.Component {
 		other.node.off('sameContact');
 		self.node.removeFromParent(false);
 		other.node.removeFromParent(false);
+
 		// 获取下面的node
 		let tempNode = self.node.y < other.node.y ? self.node : other.node;
 		const {x, y} = tempNode; // 获取合并的水果位置
 		const id = other.getComponent('Fruit').id;
+		// self.node.destroy();
+		// other.node.destroy();
 		// 爆炸特效
 		this.createFruitJuice(id - 1, cc.v2({x, y}), tempNode.width);
 
@@ -110,12 +113,11 @@ export default class Game extends cc.Component {
 		const newFruit = this.createOneFruit(nextId);
 		newFruit.setPosition(cc.v2(x, y));
 		newFruit.getComponent(cc.RigidBody).enabledContactListener = false;
-		this.scheduleOnce(()=>{
+		this.scheduleOnce(() => {
 			newFruit.getComponent(cc.RigidBody).enabledContactListener = true;
-		},0.5)
+		}, 0.5);
 		this.fruitContainer.addChild(newFruit);
-
-		if (nextId <= 11) {
+		if (nextId < 11) {
 			newFruit.scale = 0;
 			cc.tween(newFruit)
 				.to(
@@ -128,9 +130,25 @@ export default class Game extends cc.Component {
 					}
 				)
 				.start();
+		} else if (nextId == 11) {
+			console.log('合成了一个西瓜，你就是最靓的仔！');
+			var node = new cc.Node('Sprite');
+			const sp = node.addComponent(cc.Sprite);
+			sp.spriteFrame = this.fruits[10];
+			node.setScale(0);
+			node.setPosition(cc.v2({x, y}));
+			node.parent = this.canvas;
+			cc.tween(node)
+				.to(1, {
+					position: cc.v3(this.canvas.width / 2, -this.canvas.height / 2),
+					scale: 1,
+				})
+				.call(() => {
+					node.removeFromParent();
+				});
 		} else {
 			// todo: 合成两个西瓜
-			console.log('合成两个西瓜');
+			console.log('合成两个西瓜，还没做，感觉没人合到这块');
 		}
 	}
 	// 合并时的动画效果
@@ -139,8 +157,8 @@ export default class Game extends cc.Component {
 
 		this.isAnimtionPlaying = true;
 		// 播放合并的声音
-		// cc.audioEngine.play(this.boomAudio, false, 1);
-		// cc.audioEngine.play(this.waterAudio, false, 1);
+		cc.audioEngine.play(this.boomAudio, false, 1);
+		cc.audioEngine.play(this.waterAudio, false, 1);
 
 		// 展示动画
 		let juice = cc.instantiate(this.juicePrefab);
@@ -215,9 +233,10 @@ export default class Game extends cc.Component {
 		this.scheduleOnce(() => {
 			this.nextSprite.spriteFrame = this.fruits[nextId].iconSF;
 			this.nextSprite.node.scale = 0;
+			this.nextFruit = this.createOneFruit(nextId);
 			cc.tween(this.nextSprite.node)
 				.to(
-					0.5,
+					0.4,
 					{
 						scale: 0.6,
 					},
@@ -225,24 +244,33 @@ export default class Game extends cc.Component {
 						easing: 'backOut',
 					}
 				)
-				.start();
-				this.scheduleOnce(()=>{
+				.call(() => {
 					this.isCreating = false;
-				},0.6)
-			this.nextFruit = this.createOneFruit(nextId);
-			
-		}, 1);
-		// console.log(fruit);
+				})
+				.start();
+		}, 0.5);
 	}
 
 	onTouchStart(e) {
 		if (this.isCreating) return;
 		this.isCreating = true;
-
 		// 在点击位置生成一个水果
 		this.createFruitOnPos(e.getLocationX());
 	}
-
+	update(): void {
+		// let maxHeight:number = -this.canvas.height;
+		let height: cc.Node[] = [];
+		this.fruitContainer.children.forEach((child) => {
+			// console.log(child);
+			height.push(child);
+		});
+		height.sort(function (a: cc.Node, b: cc.Node) {
+			return b.y - a.y;
+		});
+		if (height[0] && height[0].y > -100) {
+			console.log('over');
+		}
+	}
 	start() {}
 
 	// update (dt) {}

@@ -18,7 +18,7 @@ export default class Fruit extends cc.Component {
 
 	onBeginContact(contact, self, other) {
 		if (self.tag != other.tag) return;
-		
+
 		// 检测到是两个相同水果的碰撞
 		if (self.node && other.node) {
 			const s = self.node.getComponent('Fruit');
@@ -27,6 +27,10 @@ export default class Fruit extends cc.Component {
 				self.node.emit('sameContact', {self, other});
 			}
 		}
+	}
+
+	onDestroy(): void {
+		this.node.removeFromParent(false);
 	}
 	// update (dt) {}
 }
