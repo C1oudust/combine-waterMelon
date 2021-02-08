@@ -204,9 +204,11 @@ export default class Game extends cc.Component {
 	onLoad() {
 		this.initPhysics();
 		this.canvas.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
+		this.canvas.on(cc.Node.EventType.TOUCH_START, this.onTouchStart, this);
+		this.canvas.on(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
 		this.successPop.active = false;
 		this.successPop.on(
-			cc.Node.EventType.TOUCH_END,
+			cc.Node.EventType.TOUCH_START,
 			() => {
 				this.successPop.active = false;
 				this.successPop.children.forEach((child) => {
@@ -219,28 +221,37 @@ export default class Game extends cc.Component {
 		);
 		this.nextFruit = this.createOneFruit(0);
 		this.nextSprite.spriteFrame = this.fruits[0].iconSF;
+		this.nextSprite.node.setPosition(
+			cc.v2(this.canvas.width / 2, -20 - this.nextSprite.node.height / 2)
+		);
 	}
 	// 在指定位置生成水果
-	createFruitOnPos(x = this.canvas.width / 2, y = -20) {
+	createFruitOnPos(
+		x = this.canvas.width / 2,
+		y = -20 - this.nextSprite.node.height / 2
+	) {
 		// console.log(e.getLocationX());
 		// let num = ~~(Math.random() * ( this.fruits.length));
 		// 最多随机到第5个水果
 		let nextId = ~~(Math.random() * 5);
 		// let nextId = 9;
 		const fruit = this.nextFruit;
-		fruit.setPosition(cc.v2(x, y));
+		fruit.setPosition(cc.v2(x, -20 - fruit.height / 2));
 		this.fruitContainer.addChild(fruit);
 		this.nextSprite.spriteFrame = null;
 
 		this.scheduleOnce(() => {
+			this.nextFruit = this.createOneFruit(nextId);
+			this.nextSprite.node.setPosition(
+				cc.v2(this.canvas.width / 2, -20 - this.nextFruit.height / 2)
+			);
 			this.nextSprite.spriteFrame = this.fruits[nextId].iconSF;
 			this.nextSprite.node.scale = 0;
-			this.nextFruit = this.createOneFruit(nextId);
 			cc.tween(this.nextSprite.node)
 				.to(
 					0.4,
 					{
-						scale: 0.6,
+						scale: 1,
 					},
 					{
 						easing: 'backOut',
@@ -251,6 +262,25 @@ export default class Game extends cc.Component {
 				})
 				.start();
 		}, 0.5);
+	}
+
+	onTouchStart(e) {
+		console.log(e.getLocationY());
+		// this.nextSprite.node.setPosition(
+		// 	e.getLocationX(),
+		// 	-20 - this.nextSprite.node.height / 2
+		// );
+		cc.tween(this.nextSprite.node).to(
+			0.1,
+			{
+				position: cc.v3(e.getLocationX(), -20 - this.nextSprite.node.height / 2),
+			}
+		).start();
+	}
+
+	onTouchMove(e) {
+		console.log('move');
+		this.nextSprite.node.setPosition(cc.v2(e.getLocationX(),this.nextSprite.node.y))
 	}
 
 	onTouchEnd(e) {
