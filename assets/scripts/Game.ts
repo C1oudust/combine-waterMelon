@@ -59,6 +59,9 @@ export default class Game extends cc.Component {
 	@property(cc.Label)
 	scoreLabel: cc.Label = null;
 
+	@property(cc.Label)
+	comboLabel: cc.Label = null;
+
 	@property([FruitItem])
 	fruits: any[] = [];
 
@@ -69,6 +72,7 @@ export default class Game extends cc.Component {
 	score: number = 0;
 	isAnimtionPlaying: boolean = false;
 	isCreating: boolean = false;
+	combo: number = 0;
 	createOneFruit(num): cc.Node {
 		let fruit = cc.instantiate(this.fruitPrefab);
 
@@ -93,7 +97,29 @@ export default class Game extends cc.Component {
 
 		return fruit;
 	}
-
+	showCombo() {
+		this.combo++;
+		console.log(this.combo);
+		if (this.combo < 2) return;
+		this.comboLabel.node.opacity = 255;
+		this.comboLabel.node.scale = 0;
+		this.comboLabel.string = 'X' + this.combo.toString();
+		cc.tween(this.comboLabel.node)
+			.to(0.2, {
+				scale: 1.5,
+			})
+			.start();
+		// this.scheduleOnce(()=>{
+		cc.tween(this.comboLabel.node)
+			.to(3, {
+				opacity: 0,
+			})
+			.call(() => {
+				this.combo = 0;
+			})
+			.start();
+		// },1.5)
+	}
 	onSameFruitContact({self, other}) {
 		other.node.off('sameContact');
 		self.node.removeFromParent(false);
@@ -102,7 +128,7 @@ export default class Game extends cc.Component {
 		let tempNode = self.node.y < other.node.y ? self.node : other.node;
 		const {x, y} = tempNode; // 获取合并的水果位置
 		const id = other.getComponent('Fruit').id;
-
+		this.showCombo();
 		// self.node.destroy();
 		// other.node.destroy();
 		// 爆炸特效
@@ -224,6 +250,7 @@ export default class Game extends cc.Component {
 		this.nextSprite.node.setPosition(
 			cc.v2(this.canvas.width / 2, -20 - this.nextSprite.node.height / 2)
 		);
+		this.comboLabel.node.opacity = 0;
 	}
 	// 在指定位置生成水果
 	createFruitOnPos(
@@ -266,24 +293,28 @@ export default class Game extends cc.Component {
 
 	onTouchStart(e) {
 		if (this.isCreating) return;
-		
+
 		// console.log(e.getLocationY());
 		// this.nextSprite.node.setPosition(
 		// 	e.getLocationX(),
 		// 	-20 - this.nextSprite.node.height / 2
 		// );
-		cc.tween(this.nextSprite.node).to(
-			0.1,
-			{
-				position: cc.v3(e.getLocationX(), -20 - this.nextSprite.node.height / 2),
-			}
-		).start();
+		cc.tween(this.nextSprite.node)
+			.to(0.1, {
+				position: cc.v3(
+					e.getLocationX(),
+					-20 - this.nextSprite.node.height / 2
+				),
+			})
+			.start();
 	}
 
 	onTouchMove(e) {
 		if (this.isCreating) return;
 		console.log('move');
-		this.nextSprite.node.setPosition(cc.v2(e.getLocationX(),this.nextSprite.node.y))
+		this.nextSprite.node.setPosition(
+			cc.v2(e.getLocationX(), this.nextSprite.node.y)
+		);
 	}
 
 	onTouchEnd(e) {
