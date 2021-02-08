@@ -265,7 +265,9 @@ export default class Game extends cc.Component {
 	}
 
 	onTouchStart(e) {
-		console.log(e.getLocationY());
+		if (this.isCreating) return;
+		
+		// console.log(e.getLocationY());
 		// this.nextSprite.node.setPosition(
 		// 	e.getLocationX(),
 		// 	-20 - this.nextSprite.node.height / 2
@@ -279,6 +281,7 @@ export default class Game extends cc.Component {
 	}
 
 	onTouchMove(e) {
+		if (this.isCreating) return;
 		console.log('move');
 		this.nextSprite.node.setPosition(cc.v2(e.getLocationX(),this.nextSprite.node.y))
 	}
