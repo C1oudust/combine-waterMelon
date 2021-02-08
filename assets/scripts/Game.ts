@@ -203,10 +203,10 @@ export default class Game extends cc.Component {
 
 	onLoad() {
 		this.initPhysics();
-		this.canvas.on(cc.Node.EventType.TOUCH_START, this.onTouchStart, this);
+		this.canvas.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
 		this.successPop.active = false;
 		this.successPop.on(
-			cc.Node.EventType.TOUCH_START,
+			cc.Node.EventType.TOUCH_END,
 			() => {
 				this.successPop.active = false;
 				this.successPop.children.forEach((child) => {
@@ -253,7 +253,7 @@ export default class Game extends cc.Component {
 		}, 0.5);
 	}
 
-	onTouchStart(e) {
+	onTouchEnd(e) {
 		if (this.isCreating) return;
 		this.isCreating = true;
 		// 在点击位置生成一个水果
