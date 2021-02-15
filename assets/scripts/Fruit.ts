@@ -21,6 +21,8 @@ export default class Fruit extends cc.Component {
 
 		// 检测到是两个相同水果的碰撞
 		if (self.node && other.node) {
+			self.node['isCreate'] = true;
+			other.node['isCreate'] = true;
 			const s = self.node.getComponent('Fruit');
 			const o = other.node.getComponent('Fruit');
 			if (s && o && s.id === o.id) {

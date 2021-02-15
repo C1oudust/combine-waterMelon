@@ -38,6 +38,12 @@ export default class Game extends cc.Component {
 	@property(cc.Node)
 	successPop: cc.Node = null;
 
+	@property(cc.Node)
+	failPop: cc.Node = null;
+
+	@property(cc.Node)
+	line: cc.Node = null;
+
 	@property(cc.Prefab)
 	fruitPrefab: cc.Prefab = null;
 
@@ -73,18 +79,21 @@ export default class Game extends cc.Component {
 	isAnimtionPlaying: boolean = false;
 	isCreating: boolean = false;
 	combo: number = 0;
+	lineBlink = false;
+	showOver = false;
 	createOneFruit(num): cc.Node {
 		let fruit = cc.instantiate(this.fruitPrefab);
 
 		// 获取到配置信息
 		const config = this.fruits[num];
+		// 触线检测状态
+		fruit['isCreate'] = false;
 
 		// 获取到节点的Fruit组件并调用实例方法
 		fruit.getComponent('Fruit').init({
 			id: config.id,
 			iconSF: config.iconSF,
 		});
-
 		fruit.getComponent(cc.RigidBody).type = cc.RigidBodyType.Dynamic;
 		const physicsCircleCollider = fruit.getComponent(cc.PhysicsCircleCollider);
 		physicsCircleCollider.radius = fruit.height / 2;
@@ -99,7 +108,7 @@ export default class Game extends cc.Component {
 	}
 	showCombo() {
 		this.combo++;
-		console.log(this.combo);
+		// console.log(this.combo);
 		if (this.combo < 2) return;
 		this.comboLabel.node.opacity = 255;
 		this.comboLabel.node.scale = 0;
@@ -144,6 +153,9 @@ export default class Game extends cc.Component {
 		this.scheduleOnce(() => {
 			newFruit.getComponent(cc.RigidBody).enabledContactListener = true;
 		}, 0.5);
+		this.scheduleOnce(()=>{
+			newFruit['isCreate'] = true;
+		},1)
 		this.fruitContainer.addChild(newFruit);
 		if (nextId < 10) {
 			newFruit.scale = 0;
@@ -200,7 +212,7 @@ export default class Game extends cc.Component {
 		// 开启碰撞检测
 		var manager = cc.director.getCollisionManager();
 		manager.enabled = true;
-		manager.enabledDebugDraw = true;
+		// manager.enabledDebugDraw = true;
 
 		// 设置四周的碰撞区域
 		let width = this.canvas.width;
@@ -233,6 +245,7 @@ export default class Game extends cc.Component {
 		this.canvas.on(cc.Node.EventType.TOUCH_START, this.onTouchStart, this);
 		this.canvas.on(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
 		this.successPop.active = false;
+		this.failPop.active = false;
 		this.successPop.on(
 			cc.Node.EventType.TOUCH_START,
 			() => {
@@ -245,12 +258,29 @@ export default class Game extends cc.Component {
 			},
 			this
 		);
+		this.failPop.on(
+			cc.Node.EventType.TOUCH_START,
+			() => {
+				// 重來
+				this.failPop.active = false;
+				this.showOver = false;
+				this.fruitContainer.removeAllChildren();
+				this.nextSprite.spriteFrame = this.fruits[0].iconSF;
+				this.nextFruit = this.createOneFruit(0);
+				this.score = 0;
+				this.scoreLabel.string = '0';
+				this.nextSprite.node.opacity = 255;
+				this.line.opacity = 0; 
+			},
+		);
 		this.nextFruit = this.createOneFruit(0);
 		this.nextSprite.spriteFrame = this.fruits[0].iconSF;
 		this.nextSprite.node.setPosition(
 			cc.v2(this.canvas.width / 2, -20 - this.nextSprite.node.height / 2)
 		);
 		this.comboLabel.node.opacity = 0;
+		this.line.opacity = 0;
+		
 	}
 	// 在指定位置生成水果
 	createFruitOnPos(
@@ -311,7 +341,7 @@ export default class Game extends cc.Component {
 
 	onTouchMove(e) {
 		if (this.isCreating) return;
-		console.log('move');
+		// console.log('move');
 		this.nextSprite.node.setPosition(
 			cc.v2(e.getLocationX(), this.nextSprite.node.y)
 		);
@@ -356,22 +386,46 @@ export default class Game extends cc.Component {
 			.start();
 	}
 
+	gameEnd(){
+		this.failPop.active = true;
+	}
+
 	update(): void {
-		// todo: 游戏失败判定
-		// let maxHeight:number = -this.canvas.height;
 		let height: cc.Node[] = [];
 		this.fruitContainer.children.forEach((child) => {
 			// console.log(child);
-			height.push(child);
+			if(child['isCreate']){
+				height.push(child);
+			}
 		});
 		height.sort(function (a: cc.Node, b: cc.Node) {
 			return b.y - a.y;
 		});
-		if (height[0] && height[0].y > -100) {
+		if (!this.showOver && height[0] && height[0].y+ height[0].height/2 > this.line.y) {
+			this.showOver = true;
+			this.nextSprite.node.opacity = 0;
 			// console.log('over');
+			cc.tween(this.line)
+			.to(0.3, { opacity: 255 })
+			.to(0.3, { opacity: 0 })
+			.union()
+			.repeat(4)
+			.call(()=>{
+				this.gameEnd();
+			})
+			.start()
 		}
+		if (!this.lineBlink && height[0] && height[0].y+ height[0].height/2 > this.line.y - 50) {
+			this.lineBlink = true;
+			this.line.opacity = 255;
+			cc.tween(this.line)
+			.to(0.3, { opacity: 0 })
+			.to(0.3, { opacity: 255 })
+			.union()
+			.repeat(4)
+			.start()
+		}
+
 	}
 	start() {}
-
-	// update (dt) {}
 }
